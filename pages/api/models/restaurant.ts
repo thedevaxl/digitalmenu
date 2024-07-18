@@ -1,43 +1,101 @@
-import mongoose, { Schema, Document, Model } from 'mongoose';
+import mongoose, { Document, Schema } from 'mongoose';
 
-interface Ingredient {
+interface IWorkingHour {
+  day: string;
+  morningOpen?: string;
+  morningClose?: string;
+  afternoonOpen?: string;
+  afternoonClose?: string;
+  closed: boolean;
+}
+
+interface IDish {
   name: string;
+  price: number;
+  ingredients: string[];
   allergens: string[];
 }
 
-interface MenuItem {
-  name: string;
+interface ICategory {
   category: string;
-  price: number;
-  ingredients: Ingredient[];
+  dishes: IDish[];
 }
 
-interface Restaurant extends Document {
+export interface IRestaurant extends Document {
+  userId: mongoose.Types.ObjectId;
   name: string;
+  owner: string;
+  mobile: string;
+  workingHours: IWorkingHour[];
   address: string;
-  openingHours: string[];
-  menu: MenuItem[];
+  menu: ICategory[];
+  createdAt: Date;
 }
 
-const IngredientSchema: Schema = new Schema({
-  name: { type: String, required: true },
-  allergens: { type: [String], required: true },
+const WorkingHourSchema: Schema = new Schema({
+  day: { type: String, required: true },
+  morningOpen: { 
+    type: String,
+    validate: {
+      validator: function(value: string) {
+        return this.closed ? true : !!value;
+      },
+      message: 'Morning open time is required if the restaurant is not closed.'
+    }
+  },
+  morningClose: { 
+    type: String,
+    validate: {
+      validator: function(value: string) {
+        return this.closed ? true : !!value;
+      },
+      message: 'Morning close time is required if the restaurant is not closed.'
+    }
+  },
+  afternoonOpen: { 
+    type: String,
+    validate: {
+      validator: function(value: string) {
+        return this.closed ? true : !!value;
+      },
+      message: 'Afternoon open time is required if the restaurant is not closed.'
+    }
+  },
+  afternoonClose: { 
+    type: String,
+    validate: {
+      validator: function(value: string) {
+        return this.closed ? true : !!value;
+      },
+      message: 'Afternoon close time is required if the restaurant is not closed.'
+    }
+  },
+  closed: { type: Boolean, default: false },
 });
 
-const MenuItemSchema: Schema = new Schema({
+const DishSchema: Schema = new Schema({
   name: { type: String, required: true },
-  category: { type: String, required: true },
   price: { type: Number, required: true },
-  ingredients: { type: [IngredientSchema], required: true },
+  ingredients: [{ type: String }],
+  allergens: [{ type: String }],
+});
+
+const CategorySchema: Schema = new Schema({
+  category: { type: String, required: true },
+  dishes: [DishSchema],
 });
 
 const RestaurantSchema: Schema = new Schema({
+  userId: { type: mongoose.Types.ObjectId, required: true, ref: 'User' },
   name: { type: String, required: true },
+  owner: { type: String, required: true },
+  mobile: { type: String, required: true },
+  workingHours: [WorkingHourSchema],
   address: { type: String, required: true },
-  openingHours: { type: [String], required: true },
-  menu: { type: [MenuItemSchema], required: true },
+  menu: [CategorySchema],
+  createdAt: { type: Date, default: Date.now },
 });
 
-const RestaurantModel: Model<Restaurant> = mongoose.models.Restaurant || mongoose.model<Restaurant>('Restaurant', RestaurantSchema);
+const Restaurant = mongoose.models.Restaurant || mongoose.model<IRestaurant>('Restaurant', RestaurantSchema);
 
-export default RestaurantModel;
+export default Restaurant;

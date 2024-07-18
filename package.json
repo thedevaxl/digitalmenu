@@ -18,9 +18,12 @@
     "autoprefixer": "^10.4.19",
     "bcryptjs": "^2.4.3",
     "daisyui": "^4.12.10",
+    "jsonwebtoken": "^9.0.2",
     "mailgun-js": "^0.22.0",
+    "mongodb": "^6.8.0",
     "mongoose": "^8.5.1",
     "next": "14.2.5",
+    "next-connect": "^1.0.0",
     "react": "^18",
     "react-dom": "^18",
     "stripe": "^16.2.0"

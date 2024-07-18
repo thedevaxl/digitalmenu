@@ -1,7 +1,10 @@
 import { useState } from 'react';
+import { useRouter } from 'next/router';
 
 const Register = () => {
   const [form, setForm] = useState({ name: '', email: '', password: '' });
+  const [error, setError] = useState('');
+  const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -10,7 +13,8 @@ const Register = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetch('/api/register', {
+    setError('');
+    const res = await fetch('/api/user?action=register', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -18,10 +22,13 @@ const Register = () => {
       body: JSON.stringify(form),
     });
 
+    const data = await res.json();
+
     if (res.ok) {
-      alert('Registration successful');
+      localStorage.setItem('token', data.token);
+      router.push('/admin');  // Redirect to the admin page
     } else {
-      alert('Registration failed');
+      setError(data.message || 'An error occurred');
     }
   };
 
@@ -29,11 +36,10 @@ const Register = () => {
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="w-full max-w-md p-8 space-y-6 bg-white rounded shadow-md">
         <h2 className="text-2xl font-bold text-center">Register</h2>
+        {error && <p className="text-red-500">{error}</p>}
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="form-control">
-            <label className="label">
-              <span className="label-text">Name</span>
-            </label>
+            <label className="label">Name</label>
             <input
               type="text"
               name="name"
@@ -44,9 +50,7 @@ const Register = () => {
             />
           </div>
           <div className="form-control">
-            <label className="label">
-              <span className="label-text">Email</span>
-            </label>
+            <label className="label">Email</label>
             <input
               type="email"
               name="email"
@@ -57,9 +61,7 @@ const Register = () => {
             />
           </div>
           <div className="form-control">
-            <label className="label">
-              <span className="label-text">Password</span>
-            </label>
+            <label className="label">Password</label>
             <input
               type="password"
               name="password"
