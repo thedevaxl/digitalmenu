@@ -29,12 +29,13 @@ export interface IRestaurant extends Document {
   workingHours: IWorkingHour[];
   address: string;
   menu: ICategory[];
+  slug: string;
   createdAt: Date;
 }
 
 const WorkingHourSchema: Schema = new Schema({
   day: { type: String, required: true },
-  morningOpen: { 
+  morningOpen: {
     type: String,
     validate: {
       validator: function(value: string) {
@@ -43,7 +44,7 @@ const WorkingHourSchema: Schema = new Schema({
       message: 'Morning open time is required if the restaurant is not closed.'
     }
   },
-  morningClose: { 
+  morningClose: {
     type: String,
     validate: {
       validator: function(value: string) {
@@ -52,7 +53,7 @@ const WorkingHourSchema: Schema = new Schema({
       message: 'Morning close time is required if the restaurant is not closed.'
     }
   },
-  afternoonOpen: { 
+  afternoonOpen: {
     type: String,
     validate: {
       validator: function(value: string) {
@@ -61,7 +62,7 @@ const WorkingHourSchema: Schema = new Schema({
       message: 'Afternoon open time is required if the restaurant is not closed.'
     }
   },
-  afternoonClose: { 
+  afternoonClose: {
     type: String,
     validate: {
       validator: function(value: string) {
@@ -93,6 +94,7 @@ const RestaurantSchema: Schema = new Schema({
   workingHours: [WorkingHourSchema],
   address: { type: String, required: true },
   menu: [CategorySchema],
+  slug: { type: String, required: true, unique: true },
   createdAt: { type: Date, default: Date.now },
 });
 

@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 import { connectToDatabase } from '../../lib/mongodb';
 import { verifyToken } from '../../lib/jwt';
 import Restaurant from './models/restaurant';
+import { slugify } from '../../utils/slugify';
 
 const handler = createRouter<NextApiRequest, NextApiResponse>();
 
@@ -43,6 +44,8 @@ handler.post(async (req, res) => {
 
   try {
     await mongoose.connect(process.env.MONGODB_URI);
+    const slug = slugify(name);
+
     const newRestaurant = new Restaurant({
       userId: req.user,
       name,
@@ -69,9 +72,11 @@ handler.put(async (req, res) => {
 
   try {
     await mongoose.connect(process.env.MONGODB_URI);
+    const slug = slugify(name);
+
     const restaurant = await Restaurant.findOneAndUpdate(
       { _id: id, userId: req.user },
-      { name, owner, mobile, workingHours, address, menu },
+      { name, owner, mobile, workingHours, address, menu, slug },
       { new: true }
     );
 

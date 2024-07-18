@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { logout } from '../utils/auth';
+import { slugify } from '../utils/slugify';
 
 const daysOfWeek = [
   { day: 'Monday', morningOpen: '09:30', morningClose: '13:30', afternoonOpen: '15:30', afternoonClose: '19:30', closed: false },
@@ -218,6 +219,16 @@ const Admin = () => {
     newMenu[menuIndex].dishes[dishIndex].allergens.splice(allergenIndex, 1);
     setForm({ ...form, menu: newMenu });
   };
+
+
+  
+  const handleView = (restaurant: any) => {
+    const slug = slugify(restaurant.name);
+    const url = `/restaurant/${slug}`;
+    window.location.href = url;
+  };
+  
+  
 
   return (
     <div className="container mx-auto p-4">
@@ -465,6 +476,7 @@ const Admin = () => {
             restaurants.map((restaurant) => (
               <li key={restaurant._id} className="border p-4 rounded">
                 <h3 className="text-lg font-bold">{restaurant.name}</h3>
+                <p>Slug: {restaurant.slug}</p>
                 <p>Owner: {restaurant.owner}</p>
                 <p>Mobile: {restaurant.mobile}</p>
                 <p>Address: {restaurant.address}</p>
@@ -508,6 +520,7 @@ const Admin = () => {
                 </div>
                 <button onClick={() => handleEdit(restaurant)} className="btn btn-secondary mt-2">Edit</button>
                 <button onClick={() => handleDelete(restaurant._id)} className="btn btn-danger mt-2">Delete</button>
+                <button onClick={() => handleView(restaurant)} className="btn btn-primary mt-2">View</button>
               </li>
             ))
           ) : (
