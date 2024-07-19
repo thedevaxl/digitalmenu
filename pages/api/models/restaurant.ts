@@ -38,7 +38,7 @@ const WorkingHourSchema: Schema = new Schema({
   morningOpen: {
     type: String,
     validate: {
-      validator: function(value: string) {
+      validator: function (this: IWorkingHour, value: string) {
         return this.closed ? true : !!value;
       },
       message: 'Morning open time is required if the restaurant is not closed.'
@@ -47,7 +47,7 @@ const WorkingHourSchema: Schema = new Schema({
   morningClose: {
     type: String,
     validate: {
-      validator: function(value: string) {
+      validator: function (this: IWorkingHour, value: string) {
         return this.closed ? true : !!value;
       },
       message: 'Morning close time is required if the restaurant is not closed.'
@@ -56,7 +56,7 @@ const WorkingHourSchema: Schema = new Schema({
   afternoonOpen: {
     type: String,
     validate: {
-      validator: function(value: string) {
+      validator: function (this: IWorkingHour, value: string) {
         return this.closed ? true : !!value;
       },
       message: 'Afternoon open time is required if the restaurant is not closed.'
@@ -65,7 +65,7 @@ const WorkingHourSchema: Schema = new Schema({
   afternoonClose: {
     type: String,
     validate: {
-      validator: function(value: string) {
+      validator: function (this: IWorkingHour, value: string) {
         return this.closed ? true : !!value;
       },
       message: 'Afternoon close time is required if the restaurant is not closed.'

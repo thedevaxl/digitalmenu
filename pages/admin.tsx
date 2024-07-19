@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { logout } from '../utils/auth';
 import { slugify } from '../utils/slugify';
+import { IRestaurant } from './api/models/restaurant'; // Adjust the import path according to your folder structure
 
 const daysOfWeek = [
   { day: 'Monday', morningOpen: '09:30', morningClose: '13:30', afternoonOpen: '15:30', afternoonClose: '19:30', closed: false },
@@ -13,9 +14,21 @@ const daysOfWeek = [
   { day: 'Sunday', morningOpen: '09:30', morningClose: '13:30', afternoonOpen: '15:30', afternoonClose: '19:30', closed: false },
 ];
 
+interface IForm {
+  id: string;
+  name: string;
+  owner: string;
+  mobile: string;
+  workingHours: IRestaurant['workingHours'];
+  address: string;
+  menu: IRestaurant['menu'];
+}
+
+import { Key } from 'react';
+
 const Admin = () => {
-  const [restaurants, setRestaurants] = useState<any[]>([]);
-  const [form, setForm] = useState({
+  const [restaurants, setRestaurants] = useState<IRestaurant[]>([]);
+  const [form, setForm] = useState<IForm>({
     id: '',
     name: '',
     owner: '',
@@ -49,7 +62,11 @@ const Admin = () => {
       const data = await res.json();
       setRestaurants(data);
     } catch (err) {
-      setError(err.message);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An unknown error occurred');
+      }
     }
   };
 
@@ -102,13 +119,17 @@ const Admin = () => {
         menu: [],
       });
     } catch (err) {
-      alert(err.message);
+      if (err instanceof Error) {
+        alert(err.message);
+      } else {
+        alert('An unknown error occurred');
+      }
     }
   };
 
-  const handleEdit = (restaurant: any) => {
+  const handleEdit = (restaurant: IRestaurant) => {
     setForm({
-      id: restaurant._id,
+      id: restaurant._id as unknown as string,
       name: restaurant.name,
       owner: restaurant.owner,
       mobile: restaurant.mobile,
@@ -142,7 +163,11 @@ const Admin = () => {
       alert('Restaurant deleted successfully');
       fetchRestaurants(token);
     } catch (err) {
-      alert(err.message);
+      if (err instanceof Error) {
+        alert(err.message);
+      } else {
+        alert('An unknown error occurred');
+      }
     }
   };
 
@@ -220,15 +245,11 @@ const Admin = () => {
     setForm({ ...form, menu: newMenu });
   };
 
-
-  
-  const handleView = (restaurant: any) => {
+  const handleView = (restaurant: IRestaurant) => {
     const slug = slugify(restaurant.name);
     const url = `/restaurant/${slug}`;
     window.location.href = url;
   };
-  
-  
 
   return (
     <div className="container mx-auto p-4">
@@ -474,7 +495,7 @@ const Admin = () => {
         <ul className="space-y-2">
           {Array.isArray(restaurants) && restaurants.length > 0 ? (
             restaurants.map((restaurant) => (
-              <li key={restaurant._id} className="border p-4 rounded">
+              <li key={restaurant._id as Key} className="border p-4 rounded">
                 <h3 className="text-lg font-bold">{restaurant.name}</h3>
                 <p>Slug: {restaurant.slug}</p>
                 <p>Owner: {restaurant.owner}</p>
@@ -519,7 +540,7 @@ const Admin = () => {
                   ))}
                 </div>
                 <button onClick={() => handleEdit(restaurant)} className="btn btn-secondary mt-2">Edit</button>
-                <button onClick={() => handleDelete(restaurant._id)} className="btn btn-danger mt-2">Delete</button>
+                <button onClick={() => handleDelete(restaurant._id as unknown as string)} className="btn btn-danger mt-2">Delete</button>
                 <button onClick={() => handleView(restaurant)} className="btn btn-primary mt-2">View</button>
               </li>
             ))

@@ -1,11 +1,16 @@
 import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
+import { IRestaurant } from '../api/models/restaurant';
 
-const RestaurantPage = ({ initialData }) => {
+interface RestaurantPageProps {
+  initialData: IRestaurant | null;
+}
+
+const RestaurantPage = ({ initialData }: RestaurantPageProps) => {
   const router = useRouter();
   const { slug } = router.query;
-  const [restaurant, setRestaurant] = useState(initialData);
+  const [restaurant, setRestaurant] = useState<IRestaurant | null>(initialData);
 
   useEffect(() => {
     const fetchRestaurant = async () => {
@@ -73,7 +78,7 @@ const RestaurantPage = ({ initialData }) => {
 };
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
-  const { slug } = context.params;
+  const { slug } = context.params!;
 
   const res = await fetch(`http://localhost:3000/api/restaurant/${slug}`);
   const data = await res.json();

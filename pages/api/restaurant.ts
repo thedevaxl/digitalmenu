@@ -26,7 +26,15 @@ handler.use(async (req, res, next) => {
 handler.get(async (req, res) => {
   try {
     const { db } = await connectToDatabase();
-    await mongoose.connect(process.env.MONGODB_URI);
+    if (!process.env.MONGODB_URI) {
+      throw new Error('MONGODB_URI environment variable is not defined.');
+    }
+    
+    const mongodbUri = process.env.MONGODB_URI;
+    if (!mongodbUri) {
+      throw new Error('MONGODB_URI environment variable is not defined.');
+    }
+    await mongoose.connect(mongodbUri);
     const restaurants = await Restaurant.find({ userId: req.user });
     return res.status(200).json(restaurants);
   } catch (error) {
@@ -43,6 +51,9 @@ handler.post(async (req, res) => {
   }
 
   try {
+    if (!process.env.MONGODB_URI) {
+      throw new Error('MONGODB_URI environment variable is not defined.');
+    }
     await mongoose.connect(process.env.MONGODB_URI);
     const slug = slugify(name);
 
@@ -71,6 +82,9 @@ handler.put(async (req, res) => {
   }
 
   try {
+    if (!process.env.MONGODB_URI) {
+      throw new Error('MONGODB_URI environment variable is not defined.');
+    }
     await mongoose.connect(process.env.MONGODB_URI);
     const slug = slugify(name);
 
@@ -99,6 +113,9 @@ handler.delete(async (req, res) => {
   }
 
   try {
+    if (!process.env.MONGODB_URI) {
+      throw new Error('MONGODB_URI environment variable is not defined.');
+    }
     await mongoose.connect(process.env.MONGODB_URI);
     const restaurant = await Restaurant.findOneAndDelete({ _id: id, userId: req.user });
 
@@ -116,7 +133,7 @@ handler.delete(async (req, res) => {
 export default handler.handler({
   onError: (err, req, res) => {
     console.error(err);
-    res.status(500).end(err.toString());
+    res.status(500).end((err as Error).toString());
   },
   onNoMatch: (req, res) => {
     res.status(404).end('Page is not found');

@@ -99,7 +99,7 @@ const handleLogout = (req: NextApiRequest, res: NextApiResponse) => {
 export default handler.handler({
   onError: (err, req, res) => {
     console.error(err);
-    res.status(500).end(err.toString());
+    res.status(500).end((err as Error).toString());
   },
   onNoMatch: (req, res) => {
     res.status(404).end('Page is not found');
