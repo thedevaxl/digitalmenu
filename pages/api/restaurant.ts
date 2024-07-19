@@ -65,6 +65,7 @@ handler.post(async (req, res) => {
       workingHours,
       address,
       menu,
+      slug,
     });
     await newRestaurant.save();
     return res.status(201).json({ message: 'Restaurant added', restaurantId: newRestaurant._id });
