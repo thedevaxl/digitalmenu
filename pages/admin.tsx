@@ -4,6 +4,7 @@ import { slugify } from "../utils/slugify";
 import Modal from "../components/Modal";
 import QRCode from "qrcode.react";
 
+
 import {
   IRestaurant,
   IWorkingHour,
@@ -105,9 +106,9 @@ const Admin = () => {
   const [userVerified, setUserVerified] = useState<boolean>(true);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const [selectedSuggestion, setSelectedSuggestion] = useState<string>("Empty");
+  const [selectedPalette, setSelectedPalette] = useState<string>("Pizza Restaurant");
 
-  const [selectedPalette, setSelectedPalette] =
-    useState<string>("Pizza Restaurant");
   const router = useRouter();
 
   useEffect(() => {
@@ -175,6 +176,11 @@ const Admin = () => {
       }
       const data = await res.json();
       setRestaurants(data);
+
+      // Check if no restaurants and show prompt to create one
+      if (data.length === 0) {
+        setIsModalOpen(true);
+      }
     } catch (err) {
       setError((err as Error).message);
     }
@@ -187,10 +193,43 @@ const Admin = () => {
     setForm({ ...form, [name]: value });
   };
 
+  const handleSuggestionChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedType = e.target.value;
+  
+    if (selectedType === "Empty") {
+      setForm((prevForm) => ({
+        ...prevForm,
+        menu: [],
+      }));
+    } else {
+      try {
+        const res = await fetch(`/api/suggestions?type=${selectedType.toLowerCase().replace(' ', '%20')}`);
+        if (!res.ok) {
+          throw new Error("Failed to fetch suggestions");
+        }
+        const data = await res.json();
+        setForm((prevForm) => ({
+          ...prevForm,
+          menu: data.menu,
+        }));
+      } catch (err) {
+        alert((err as Error).message);
+      }
+    }
+  
+    setSelectedSuggestion(selectedType);
+  };
+  
   const handlePaletteChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const palette = colorPalettes[e.target.value];
-    setForm({ ...form, colorPalette: palette });
-    setSelectedPalette(e.target.value); // Update the selected palette name
+    const selectedType = e.target.value;
+    const palette = colorPalettes[selectedType];
+  
+    setForm((prevForm) => ({
+      ...prevForm,
+      colorPalette: palette,
+    }));
+  
+    setSelectedPalette(selectedType);
   };
 
   const handleWorkingHoursChange = (
@@ -213,12 +252,12 @@ const Admin = () => {
       router.push("/login");
       return;
     }
-
+  
     const method = form.id ? "PUT" : "POST";
     const endpoint = form.id
       ? `/api/restaurant?id=${form.id}`
       : "/api/restaurant";
-
+  
     try {
       const res = await fetch(endpoint, {
         method,
@@ -228,28 +267,21 @@ const Admin = () => {
         },
         body: JSON.stringify(form),
       });
-
+  
       if (!res.ok) {
         throw new Error("Failed to save restaurant");
       }
-
+  
       alert("Restaurant saved successfully");
       fetchRestaurants(token);
-      setForm({
-        id: "",
-        name: "",
-        owner: "",
-        mobile: "",
-        workingHours: daysOfWeek,
-        address: "",
-        menu: [],
-        colorPalette: colorPalettes["Pizza Restaurant"], // Reset to default palette
-      });
+      setDefaultFormValues(); // Reset to default empty form values
       setSelectedPalette("Pizza Restaurant"); // Reset the selected palette
+      setSelectedSuggestion("Empty"); // Reset the selected suggestion
     } catch (err) {
       alert((err as Error).message);
     }
   };
+  
 
   const handleEdit = (restaurant: IRestaurant) => {
     const paletteName =
@@ -258,7 +290,7 @@ const Admin = () => {
           JSON.stringify(colorPalettes[name]) ===
           JSON.stringify(restaurant.colorPalette)
       ) || "Pizza Restaurant"; // Default to 'Pizza Restaurant' if not found
-
+  
     setForm({
       id: restaurant._id.toString(),
       name: restaurant.name,
@@ -269,9 +301,10 @@ const Admin = () => {
       menu: restaurant.menu,
       colorPalette: restaurant.colorPalette, // Retain the actual color palette
     });
-
+  
     setSelectedPalette(paletteName); // Update the selected palette name
   };
+  
 
   const handleDelete = async (id: string) => {
     const token = localStorage.getItem("token");
@@ -466,6 +499,60 @@ const Admin = () => {
     }
   };
 
+  const setDefaultFormValues = () => {
+    setForm({
+      id: "",
+      name: "",
+      owner: "",
+      mobile: "",
+      workingHours: daysOfWeek,
+      address: "",
+      menu: [],
+      colorPalette: colorPalettes["Pizza Restaurant"],
+    });
+  };
+
+  const modalContent = (
+    <div>
+      <p className="mb-4">Please select a restaurant type to start:</p>
+      <label className="label">Suggestion Menu</label>
+      <select
+        className="select select-bordered w-full mb-4"
+        value={selectedSuggestion}
+        onChange={handleSuggestionChange}
+      >
+        <option value="Empty">Empty</option>
+        <option value="Pizza Restaurant">Pizza Restaurant</option>
+        <option value="Burger/Brewery">Burger/Brewery</option>
+        <option value="Sushi Restaurant">Sushi Restaurant</option>
+        <option value="Coffee Shop">Coffee Shop</option>
+        <option value="Ice Cream Parlor">Ice Cream Parlor</option>
+      </select>
+  
+      <label className="label">Color Palette</label>
+      <select
+        className="select select-bordered w-full mb-4"
+        value={selectedPalette}
+        onChange={handlePaletteChange}
+      >
+        {Object.keys(colorPalettes).map((template, index) => (
+          <option key={index} value={template}>
+            {template}
+          </option>
+        ))}
+      </select>
+  
+      <button
+        className="btn btn-primary w-full mt-4"
+        onClick={() => setIsModalOpen(false)}
+      >
+        Accept
+      </button>
+    </div>
+  );
+  
+  
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
@@ -494,6 +581,15 @@ const Admin = () => {
           isOpen={!userVerified}
           onClose={() => setIsModalOpen(false)}
           type="warning" // Set modal type to warning
+        />
+      )}
+      {restaurants.length === 0 && (
+        <Modal
+          title="Create Your First Restaurant"
+          content={modalContent}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          type="default"
         />
       )}
       <form onSubmit={handleSubmit} className="space-y-4">
