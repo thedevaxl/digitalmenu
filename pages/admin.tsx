@@ -11,6 +11,8 @@ import {
   IDish,
 } from "./api/models/restaurant";
 
+import AddressInput from "../components/AddressInput";
+
 interface IForm {
   id: string;
   name: string;
@@ -364,6 +366,10 @@ const Admin = () => {
     setForm({ ...form, menu: newMenu });
   };
 
+  const handleAddressChange = (address: string) => {
+    setForm({ ...form, address });
+  };
+
   const handleAddDish = (menuIndex: number) => {
     const newMenu = [...form.menu];
     newMenu[menuIndex].dishes.push({
@@ -524,7 +530,9 @@ const Admin = () => {
 
   const modalContent = (
     <div>
-      <p className="mb-4">Please select a restaurant type to start:</p>
+      <p className="mb-4">
+        Please select a restaurant type to start or start empty:
+      </p>
       <label className="label">Suggestion Menu</label>
       <select
         className="select select-bordered w-full mb-4"
@@ -669,6 +677,10 @@ const Admin = () => {
             />
           </div>
           <div className="form-control">
+            <label className="label">Address</label>
+            <AddressInput value={form.address} onChange={handleAddressChange} />
+          </div>
+          <div className="form-control">
             <label className="label">Working Hours</label>
             {form.workingHours.map((wh, index) => (
               <div
@@ -728,16 +740,6 @@ const Admin = () => {
                 )}
               </div>
             ))}
-          </div>
-          <div className="form-control">
-            <label className="label">Address</label>
-            <textarea
-              name="address"
-              className="textarea textarea-bordered"
-              value={form.address}
-              onChange={handleChange}
-              required
-            />
           </div>
           <div className="form-control">
             <label className="label">Menu Categories</label>
@@ -1006,13 +1008,15 @@ const Admin = () => {
         </div>
       )}
 
-      <Modal
-        title="Create Your First Restaurant"
-        content={modalContent}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        type="default"
-      />
+      {userVerified && (
+        <Modal
+          title="Create Your Restaurant"
+          content={modalContent}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          type="default"
+        />
+      )}
     </div>
   );
 };

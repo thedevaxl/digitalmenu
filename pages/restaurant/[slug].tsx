@@ -2,6 +2,9 @@ import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
 import { IRestaurant } from '../api/models/restaurant';
+import dynamic from 'next/dynamic';
+
+const Map = dynamic(() => import('../../components/Map'), { ssr: false });
 
 interface RestaurantPageProps {
   initialData: IRestaurant | null;
@@ -33,9 +36,24 @@ const RestaurantPage = ({ initialData }: RestaurantPageProps) => {
   return (
     <div className="container mx-auto p-4" style={{ backgroundColor: primaryColor, color: secondaryColor }}>
       <h1 className="text-2xl font-bold mb-4 text-center" style={{ color: secondaryColor }}>{restaurant.name}</h1>
-      <p className="text-center">Owner: {restaurant.owner}</p>
-      <p className="text-center">Mobile: {restaurant.mobile}</p>
-      <p className="text-center">Address: {restaurant.address}</p>
+      <div className="flex flex-col md:flex-row md:space-x-4">
+        <div className="md:w-1/2">
+          <h2 className="text-xl font-bold" style={{ color: tertiaryColor }}>Contact Information</h2>
+          <p>Owner: {restaurant.owner}</p>
+          <p>Mobile: {restaurant.mobile}</p>
+          <h2 className="text-xl font-bold mt-4" style={{ color: tertiaryColor }}>Working Hours</h2>
+          <ul>
+            {restaurant.workingHours.map((wh, index) => (
+              <li key={index} className={`${wh.closed ? 'line-through' : ''}`}>
+                <p>{wh.day}: {wh.closed ? 'Closed' : `${wh.morningOpen} - ${wh.morningClose}, ${wh.afternoonOpen} - ${wh.afternoonClose}`}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="md:w-1/2 h-64 md:h-auto">
+          <Map address={restaurant.address} />
+        </div>
+      </div>
       <h2 className="text-xl font-bold mt-8" style={{ color: tertiaryColor }}>Menu</h2>
       <div className="flex flex-wrap -mx-4">
         {restaurant.menu && restaurant.menu.length > 0 ? (
