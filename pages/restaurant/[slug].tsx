@@ -28,21 +28,23 @@ const RestaurantPage = ({ initialData }: RestaurantPageProps) => {
     return <p>Loading...</p>;
   }
 
+  const [primaryColor, secondaryColor, tertiaryColor, quaternaryColor] = restaurant.colorPalette;
+
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4 text-center">{restaurant.name}</h1>
+    <div className="container mx-auto p-4" style={{ backgroundColor: primaryColor, color: secondaryColor }}>
+      <h1 className="text-2xl font-bold mb-4 text-center" style={{ color: secondaryColor }}>{restaurant.name}</h1>
       <p className="text-center">Owner: {restaurant.owner}</p>
       <p className="text-center">Mobile: {restaurant.mobile}</p>
       <p className="text-center">Address: {restaurant.address}</p>
-      <h2 className="text-xl font-bold mt-8">Menu</h2>
+      <h2 className="text-xl font-bold mt-8" style={{ color: tertiaryColor }}>Menu</h2>
       <div className="flex flex-wrap -mx-4">
         {restaurant.menu && restaurant.menu.length > 0 ? (
           restaurant.menu.map((category, index) => (
-            <div key={index} className="w-full md:w-1/3 px-4 mb-8">
-              <h3 className="text-lg font-bold">{category.category}</h3>
+            <div key={index} className="w-full md:w-1/3 px-4 mb-8" style={{ borderColor: tertiaryColor }}>
+              <h3 className="text-lg font-bold" style={{ color: quaternaryColor }}>{category.category}</h3>
               {category.dishes && category.dishes.length > 0 ? (
                 category.dishes.map((dish, dishIndex) => (
-                  <div key={dishIndex} className="border p-4 mb-4">
+                  <div key={dishIndex} className="border p-4 mb-4" style={{ backgroundColor: quaternaryColor }}>
                     <strong>{dish.name}</strong> - ${dish.price}
                     <ul>
                       {dish.ingredients && dish.ingredients.length > 0 ? (

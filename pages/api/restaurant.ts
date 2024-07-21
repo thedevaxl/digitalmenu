@@ -50,9 +50,9 @@ handler.get(async (req, res) => {
 });
 
 handler.post(async (req, res) => {
-  const { name, owner, mobile, workingHours, address, menu } = req.body;
+  const { name, owner, mobile, workingHours, address, menu, colorPalette } = req.body;
 
-  if (!name || !owner || !mobile || !workingHours || !address || !menu) {
+  if (!name || !owner || !mobile || !workingHours || !address || !menu || !colorPalette) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
 
@@ -70,6 +70,7 @@ handler.post(async (req, res) => {
       address,
       menu,
       slug,
+      colorPalette, // Add this line
     });
     await newRestaurant.save();
     return res.status(201).json({ message: 'Restaurant added', restaurantId: newRestaurant._id });
@@ -80,9 +81,9 @@ handler.post(async (req, res) => {
 });
 
 handler.put(async (req, res) => {
-  const { id, name, owner, mobile, workingHours, address, menu } = req.body;
+  const { id, name, owner, mobile, workingHours, address, menu, colorPalette } = req.body;
 
-  if (!id || !name || !owner || !mobile || !workingHours || !address || !menu) {
+  if (!id || !name || !owner || !mobile || !workingHours || !address || !menu || !colorPalette) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
 
@@ -93,7 +94,7 @@ handler.put(async (req, res) => {
 
     const restaurant = await Restaurant.findOneAndUpdate(
       { _id: new mongoose.Types.ObjectId(id), userId: req.user },
-      { name, owner, mobile, workingHours, address, menu, slug },
+      { name, owner, mobile, workingHours, address, menu, slug, colorPalette }, // Add colorPalette here
       { new: true }
     );
 

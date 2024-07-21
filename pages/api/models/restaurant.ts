@@ -32,6 +32,7 @@ export interface IRestaurant extends Document {
   menu: ICategory[];
   slug: string;
   createdAt: Date;
+  colorPalette: string[];
 }
 
 const WorkingHourSchema: Schema = new Schema({
@@ -97,6 +98,7 @@ const RestaurantSchema: Schema = new Schema({
   menu: [CategorySchema],
   slug: { type: String, required: true, unique: true },
   createdAt: { type: Date, default: Date.now },
+  colorPalette: { type: [String] },
 });
 
 const Restaurant = mongoose.models.Restaurant || mongoose.model<IRestaurant>('Restaurant', RestaurantSchema);
