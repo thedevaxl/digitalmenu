@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-interface IWorkingHour {
+export interface IWorkingHour {
   day: string;
   morningOpen?: string;
   morningClose?: string;
@@ -9,19 +9,20 @@ interface IWorkingHour {
   closed: boolean;
 }
 
-interface IDish {
+export interface IDish {
   name: string;
   price: number;
   ingredients: string[];
   allergens: string[];
 }
 
-interface ICategory {
+export interface ICategory {
   category: string;
   dishes: IDish[];
 }
 
 export interface IRestaurant extends Document {
+  _id: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
   name: string;
   owner: string;

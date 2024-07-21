@@ -1,10 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Key } from 'react';
 import { useRouter } from 'next/router';
-import { logout } from '../utils/auth';
 import { slugify } from '../utils/slugify';
-import { IRestaurant } from './api/models/restaurant'; // Adjust the import path according to your folder structure
+import Modal from '../components/Modal';
+import { IRestaurant, IWorkingHour, ICategory, IDish } from './api/models/restaurant';
 
-const daysOfWeek = [
+interface IForm {
+  id: string;
+  name: string;
+  owner: string;
+  mobile: string;
+  workingHours: IWorkingHour[];
+  address: string;
+  menu: ICategory[];
+}
+
+const daysOfWeek: IWorkingHour[] = [
   { day: 'Monday', morningOpen: '09:30', morningClose: '13:30', afternoonOpen: '15:30', afternoonClose: '19:30', closed: false },
   { day: 'Tuesday', morningOpen: '09:30', morningClose: '13:30', afternoonOpen: '15:30', afternoonClose: '19:30', closed: false },
   { day: 'Wednesday', morningOpen: '09:30', morningClose: '13:30', afternoonOpen: '15:30', afternoonClose: '19:30', closed: false },
@@ -13,18 +23,6 @@ const daysOfWeek = [
   { day: 'Saturday', morningOpen: '09:30', morningClose: '13:30', afternoonOpen: '15:30', afternoonClose: '19:30', closed: false },
   { day: 'Sunday', morningOpen: '09:30', morningClose: '13:30', afternoonOpen: '15:30', afternoonClose: '19:30', closed: false },
 ];
-
-interface IForm {
-  id: string;
-  name: string;
-  owner: string;
-  mobile: string;
-  workingHours: IRestaurant['workingHours'];
-  address: string;
-  menu: IRestaurant['menu'];
-}
-
-import { Key } from 'react';
 
 const Admin = () => {
   const [restaurants, setRestaurants] = useState<IRestaurant[]>([]);
@@ -35,9 +33,11 @@ const Admin = () => {
     mobile: '',
     workingHours: daysOfWeek,
     address: '',
-    menu: [],
+    menu: [] as ICategory[],
   });
   const [error, setError] = useState<string | null>(null);
+  const [userVerified, setUserVerified] = useState<boolean>(true);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -45,9 +45,53 @@ const Admin = () => {
     if (!token) {
       router.push('/login');
     } else {
+      fetchUserDetails(token);
       fetchRestaurants(token);
     }
-  }, []);
+
+    // Check for verification query parameters
+    if (router.query.verify && router.query.token) {
+      verifyUser(router.query.token as string);
+    }
+  }, [router.query]);
+
+  const fetchUserDetails = async (token: string) => {
+    try {
+      const res = await fetch('/api/user', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!res.ok) {
+        throw new Error('Failed to fetch user details');
+      }
+      const data = await res.json();
+      setUserVerified(data.isVerified);
+      if (!data.isVerified) {
+        setIsModalOpen(true);
+      }
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  };
+
+  const verifyUser = async (token: string) => {
+    try {
+      const res = await fetch(`/api/user?action=verify&token=${token}`, {
+        method: 'POST',
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to verify email');
+      }
+
+      alert('Email verified successfully');
+      setUserVerified(true);
+      setIsModalOpen(false);
+    } catch (err) {
+      alert((err as Error).message);
+    }
+  };
 
   const fetchRestaurants = async (token: string) => {
     try {
@@ -62,11 +106,7 @@ const Admin = () => {
       const data = await res.json();
       setRestaurants(data);
     } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('An unknown error occurred');
-      }
+      setError((err as Error).message);
     }
   };
 
@@ -119,17 +159,13 @@ const Admin = () => {
         menu: [],
       });
     } catch (err) {
-      if (err instanceof Error) {
-        alert(err.message);
-      } else {
-        alert('An unknown error occurred');
-      }
+      alert((err as Error).message);
     }
   };
 
   const handleEdit = (restaurant: IRestaurant) => {
     setForm({
-      id: restaurant._id as unknown as string,
+      id: restaurant._id.toString(),
       name: restaurant.name,
       owner: restaurant.owner,
       mobile: restaurant.mobile,
@@ -163,11 +199,7 @@ const Admin = () => {
       alert('Restaurant deleted successfully');
       fetchRestaurants(token);
     } catch (err) {
-      if (err instanceof Error) {
-        alert(err.message);
-      } else {
-        alert('An unknown error occurred');
-      }
+      alert((err as Error).message);
     }
   };
 
@@ -251,10 +283,82 @@ const Admin = () => {
     window.location.href = url;
   };
 
+  const handleResendVerificationEmail = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/user?action=resend-verification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to resend verification email');
+      }
+
+      alert('Verification email sent successfully');
+    } catch (err) {
+      alert((err as Error).message);
+    }
+  };
+
+  const handleLogout = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/user?action=logout', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to logout');
+      }
+
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    } catch (error) {
+      console.error(error);
+      alert('Failed to logout');
+    }
+  };
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
-      <button onClick={logout} className="btn btn-secondary mb-4">Logout</button>
+      <button onClick={handleLogout} className="btn btn-secondary mb-4">Logout</button>
+      {!userVerified && (
+        <Modal
+          title="Verify Your Email"
+          content={
+            <>
+              <p className="mb-4">Please verify your email address to access all features.</p>
+              <button
+                onClick={handleResendVerificationEmail}
+                className="btn btn-primary"
+              >
+                Resend Verification Email
+              </button>
+              <button onClick={handleLogout} className="btn btn-secondary mb-4">Logout</button>
+            </>
+          }
+          isOpen={!userVerified}
+          onClose={() => setIsModalOpen(false)}
+          type="warning" // Set modal type to warning
+        />
+      )}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="form-control">
           <label className="label">Restaurant Name</label>
@@ -495,7 +599,7 @@ const Admin = () => {
         <ul className="space-y-2">
           {Array.isArray(restaurants) && restaurants.length > 0 ? (
             restaurants.map((restaurant) => (
-              <li key={restaurant._id as Key} className="border p-4 rounded">
+              <li key={restaurant._id.toString()}  className="border p-4 rounded">
                 <h3 className="text-lg font-bold">{restaurant.name}</h3>
                 <p>Slug: {restaurant.slug}</p>
                 <p>Owner: {restaurant.owner}</p>
@@ -540,7 +644,7 @@ const Admin = () => {
                   ))}
                 </div>
                 <button onClick={() => handleEdit(restaurant)} className="btn btn-secondary mt-2">Edit</button>
-                <button onClick={() => handleDelete(restaurant._id as unknown as string)} className="btn btn-danger mt-2">Delete</button>
+                <button onClick={() => handleDelete(restaurant._id.toString())} className="btn btn-danger mt-2">Delete</button>
                 <button onClick={() => handleView(restaurant)} className="btn btn-primary mt-2">View</button>
               </li>
             ))
