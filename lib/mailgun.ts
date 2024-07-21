@@ -12,7 +12,21 @@ interface SendEmailParams {
   html?: string;
 }
 
-export const sendEmail = async ({ to, subject, text, html }: SendEmailParams) => {
+interface SendEmailResponse {
+  id: string;
+  message: string;
+}
+
+interface SendEmailError {
+  message: string;
+}
+
+export const sendEmail = async ({
+  to,
+  subject,
+  text,
+  html,
+}: SendEmailParams): Promise<SendEmailResponse | SendEmailError> => {
   const data = {
     from: 'Your App <no-reply@yourdomain.com>',
     to,
@@ -22,9 +36,11 @@ export const sendEmail = async ({ to, subject, text, html }: SendEmailParams) =>
   };
 
   try {
-    await mg.messages().send(data);
-    console.log('Email sent successfully');
-  } catch (error) {
-    console.error('Error sending email:', error);
+    const response = await mg.messages().send(data);
+    console.log('Email sent successfully:', response);
+    return response;
+  } catch (error: any) {
+    console.error('Error sending email:', error.message);
+    return { message: error.message };
   }
 };

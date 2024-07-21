@@ -1,9 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Key } from 'react';
 import { useRouter } from 'next/router';
 import { slugify } from '../utils/slugify';
 import Modal from '../components/Modal';
+import { IRestaurant, IWorkingHour, ICategory, IDish } from './api/models/restaurant';
 
-const daysOfWeek = [
+interface IForm {
+  id: string;
+  name: string;
+  owner: string;
+  mobile: string;
+  workingHours: IWorkingHour[];
+  address: string;
+  menu: ICategory[];
+}
+
+const daysOfWeek: IWorkingHour[] = [
   { day: 'Monday', morningOpen: '09:30', morningClose: '13:30', afternoonOpen: '15:30', afternoonClose: '19:30', closed: false },
   { day: 'Tuesday', morningOpen: '09:30', morningClose: '13:30', afternoonOpen: '15:30', afternoonClose: '19:30', closed: false },
   { day: 'Wednesday', morningOpen: '09:30', morningClose: '13:30', afternoonOpen: '15:30', afternoonClose: '19:30', closed: false },
@@ -14,15 +25,15 @@ const daysOfWeek = [
 ];
 
 const Admin = () => {
-  const [restaurants, setRestaurants] = useState<any[]>([]);
-  const [form, setForm] = useState({
+  const [restaurants, setRestaurants] = useState<IRestaurant[]>([]);
+  const [form, setForm] = useState<IForm>({
     id: '',
     name: '',
     owner: '',
     mobile: '',
     workingHours: daysOfWeek,
     address: '',
-    menu: [],
+    menu: [] as ICategory[],
   });
   const [error, setError] = useState<string | null>(null);
   const [userVerified, setUserVerified] = useState<boolean>(true);
@@ -60,7 +71,7 @@ const Admin = () => {
         setIsModalOpen(true);
       }
     } catch (err) {
-      setError(err.message);
+      setError((err as Error).message);
     }
   };
 
@@ -78,10 +89,10 @@ const Admin = () => {
       setUserVerified(true);
       setIsModalOpen(false);
     } catch (err) {
-      alert(err.message);
+      alert((err as Error).message);
     }
   };
-  
+
   const fetchRestaurants = async (token: string) => {
     try {
       const res = await fetch('/api/restaurant', {
@@ -95,7 +106,7 @@ const Admin = () => {
       const data = await res.json();
       setRestaurants(data);
     } catch (err) {
-      setError(err.message);
+      setError((err as Error).message);
     }
   };
 
@@ -148,13 +159,13 @@ const Admin = () => {
         menu: [],
       });
     } catch (err) {
-      alert(err.message);
+      alert((err as Error).message);
     }
   };
 
-  const handleEdit = (restaurant: any) => {
+  const handleEdit = (restaurant: IRestaurant) => {
     setForm({
-      id: restaurant._id,
+      id: restaurant._id.toString(),
       name: restaurant.name,
       owner: restaurant.owner,
       mobile: restaurant.mobile,
@@ -188,7 +199,7 @@ const Admin = () => {
       alert('Restaurant deleted successfully');
       fetchRestaurants(token);
     } catch (err) {
-      alert(err.message);
+      alert((err as Error).message);
     }
   };
 
@@ -266,7 +277,7 @@ const Admin = () => {
     setForm({ ...form, menu: newMenu });
   };
 
-  const handleView = (restaurant: any) => {
+  const handleView = (restaurant: IRestaurant) => {
     const slug = slugify(restaurant.name);
     const url = `/restaurant/${slug}`;
     window.location.href = url;
@@ -294,7 +305,7 @@ const Admin = () => {
 
       alert('Verification email sent successfully');
     } catch (err) {
-      alert(err.message);
+      alert((err as Error).message);
     }
   };
 
@@ -303,7 +314,7 @@ const Admin = () => {
     if (!token) {
       return;
     }
-  
+
     try {
       const response = await fetch('/api/user?action=logout', {
         method: 'POST',
@@ -311,11 +322,11 @@ const Admin = () => {
           'Authorization': `Bearer ${token}`,
         },
       });
-  
+
       if (!response.ok) {
         throw new Error('Failed to logout');
       }
-  
+
       localStorage.removeItem('token');
       window.location.href = '/login';
     } catch (error) {
@@ -323,6 +334,7 @@ const Admin = () => {
       alert('Failed to logout');
     }
   };
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
@@ -340,7 +352,6 @@ const Admin = () => {
                 Resend Verification Email
               </button>
               <button onClick={handleLogout} className="btn btn-secondary mb-4">Logout</button>
-
             </>
           }
           isOpen={!userVerified}
@@ -588,7 +599,7 @@ const Admin = () => {
         <ul className="space-y-2">
           {Array.isArray(restaurants) && restaurants.length > 0 ? (
             restaurants.map((restaurant) => (
-              <li key={restaurant._id} className="border p-4 rounded">
+              <li key={restaurant._id.toString()}  className="border p-4 rounded">
                 <h3 className="text-lg font-bold">{restaurant.name}</h3>
                 <p>Slug: {restaurant.slug}</p>
                 <p>Owner: {restaurant.owner}</p>
@@ -633,7 +644,7 @@ const Admin = () => {
                   ))}
                 </div>
                 <button onClick={() => handleEdit(restaurant)} className="btn btn-secondary mt-2">Edit</button>
-                <button onClick={() => handleDelete(restaurant._id)} className="btn btn-danger mt-2">Delete</button>
+                <button onClick={() => handleDelete(restaurant._id.toString())} className="btn btn-danger mt-2">Delete</button>
                 <button onClick={() => handleView(restaurant)} className="btn btn-primary mt-2">View</button>
               </li>
             ))

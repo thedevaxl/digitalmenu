@@ -4,8 +4,9 @@ import bcrypt from "bcryptjs";
 import User from "./models/user";
 import { generateToken, verifyToken } from "../../lib/jwt";
 import { sendEmail } from "../../lib/mailgun";
-import { connectToDatabase } from "../../lib/mongodb";
+import connectToDatabase from "../../lib/mongodb";
 import jwtMiddleware from "../../lib/middleware";
+import mongoose from 'mongoose';
 
 const tokenBlacklist = new Set<string>();
 
@@ -32,7 +33,7 @@ const handleRegister = async (req: NextApiRequest, res: NextApiResponse) => {
       email,
       password: hashedPassword,
       isVerified: false,
-      createdAt: new Date(), // Ensure the createdAt field is set
+      createdAt: new Date(),
     });
 
     await newUser.save();
@@ -45,7 +46,6 @@ const handleRegister = async (req: NextApiRequest, res: NextApiResponse) => {
       subject: 'Verify your email address',
       html: `<p>Hello ${newUser.name},</p><p>Please verify your email address by clicking the link below:</p><a href="${verificationLink}">Verify Email</a>`,
     });
-
 
     return res.status(201).json({ message: 'User registered', userId: newUser._id, token });
   } catch (error) {
@@ -77,9 +77,7 @@ const handleLogin = async (req: NextApiRequest, res: NextApiResponse) => {
     return res.status(200).json({ message: "Login successful", token });
   } catch (error) {
     console.error("Error during login:", error);
-    return res
-      .status(500)
-      .json({ message: "Internal server error", error: error.message });
+    return res.status(500).json({ message: "Internal server error", error: error.message });
   }
 };
 
@@ -102,9 +100,7 @@ const handleLogout = async (req: NextApiRequest, res: NextApiResponse) => {
     return res.status(200).json({ message: "Logout successful" });
   } catch (error) {
     console.error("Error during logout:", error);
-    return res
-      .status(500)
-      .json({ message: "Internal server error", error: error.message });
+    return res.status(500).json({ message: "Internal server error", error: error.message });
   }
 };
 
@@ -122,7 +118,7 @@ const handleVerify = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     await connectToDatabase();
-    const user = await User.findById(decoded.userId);
+    const user = await User.findById(new mongoose.Types.ObjectId(decoded.userId));
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -142,10 +138,7 @@ const handleVerify = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 };
 
-const handleResendVerification = async (
-  req: NextApiRequest,
-  res: NextApiResponse
-) => {
+const handleResendVerification = async (req: NextApiRequest, res: NextApiResponse) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ message: "Unauthorized: No token provided" });
@@ -159,7 +152,7 @@ const handleResendVerification = async (
     }
 
     await connectToDatabase();
-    const currentUser = await User.findById(decoded.userId);
+    const currentUser = await User.findById(new mongoose.Types.ObjectId(decoded.userId));
     if (!currentUser) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -173,14 +166,10 @@ const handleResendVerification = async (
       html: `<p>Hello ${currentUser.name},</p><p>Please verify your email address by clicking the link below:</p><a href="${verificationLink}">Verify Email</a>`,
     });
 
-    return res
-      .status(200)
-      .json({ message: "Verification email sent successfully" });
+    return res.status(200).json({ message: "Verification email sent successfully" });
   } catch (error) {
     console.error("Error resending verification email:", error);
-    return res
-      .status(500)
-      .json({ message: "Internal server error", error: error.message });
+    return res.status(500).json({ message: "Internal server error", error: error.message });
   }
 };
 
@@ -196,6 +185,7 @@ handler.post(async (req, res) => {
       break;
     case "logout":
       await handleLogout(req, res);
+      break;
     case "verify":
       await handleVerify(req, res);
       break;
@@ -218,16 +208,15 @@ handler.get(async (req, res) => {
   }
 
   try {
-    const user = await User.findById(userId);
+    await connectToDatabase();
+    const user = await User.findById(new mongoose.Types.ObjectId(userId));
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
     res.status(200).json(user);
   } catch (error) {
     console.error("Error fetching user:", error);
-    res
-      .status(500)
-      .json({ message: "Internal server error", error: error.message });
+    res.status(500).json({ message: "Internal server error", error: error.message });
   }
 });
 

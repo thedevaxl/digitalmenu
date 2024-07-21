@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createRouter } from 'next-connect';
 import mongoose from 'mongoose';
-import { connectToDatabase } from '../../lib/mongodb';
+import connectToDatabase from '../../lib/mongodb';
 import { verifyToken } from '../../lib/jwt';
 import Restaurant from './models/restaurant';
 import { slugify } from '../../utils/slugify';
@@ -26,10 +26,11 @@ handler.use(async (req, res, next) => {
 handler.get(async (req, res) => {
   const { slug } = req.query;
 
-  if (slug) {
-    // Fetching a single restaurant by slug
-    try {
-      await connectToDatabase();
+  try {
+    await connectToDatabase();
+
+    if (slug) {
+      // Fetching a single restaurant by slug
       const restaurant = await Restaurant.findOne({ slug: slug as string });
 
       if (!restaurant) {
@@ -37,24 +38,14 @@ handler.get(async (req, res) => {
       }
 
       return res.status(200).json(restaurant);
-    } catch (error) {
-      console.error('Error fetching restaurant:', error);
-      return res.status(500).json({ message: 'Internal server error', error: error.message });
-    }
-  } else {
-    // Fetching all restaurants for the authenticated user
-    try {
-      if (!process.env.MONGODB_URI) {
-        throw new Error('MONGODB_URI environment variable is not defined.');
-      }
-
-      await mongoose.connect(process.env.MONGODB_URI);
+    } else {
+      // Fetching all restaurants for the authenticated user
       const restaurants = await Restaurant.find({ userId: req.user });
       return res.status(200).json(restaurants);
-    } catch (error) {
-      console.error('Error fetching restaurants:', error);
-      return res.status(500).json({ message: 'Internal server error', error: error.message });
     }
+  } catch (error) {
+    console.error('Error fetching restaurant(s):', error);
+    return res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 });
 
@@ -66,10 +57,8 @@ handler.post(async (req, res) => {
   }
 
   try {
-    if (!process.env.MONGODB_URI) {
-      throw new Error('MONGODB_URI environment variable is not defined.');
-    }
-    await mongoose.connect(process.env.MONGODB_URI);
+    await connectToDatabase();
+
     const slug = slugify(name);
 
     const newRestaurant = new Restaurant({
@@ -98,14 +87,12 @@ handler.put(async (req, res) => {
   }
 
   try {
-    if (!process.env.MONGODB_URI) {
-      throw new Error('MONGODB_URI environment variable is not defined.');
-    }
-    await mongoose.connect(process.env.MONGODB_URI);
+    await connectToDatabase();
+
     const slug = slugify(name);
 
     const restaurant = await Restaurant.findOneAndUpdate(
-      { _id: id, userId: req.user },
+      { _id: new mongoose.Types.ObjectId(id), userId: req.user },
       { name, owner, mobile, workingHours, address, menu, slug },
       { new: true }
     );
@@ -129,11 +116,9 @@ handler.delete(async (req, res) => {
   }
 
   try {
-    if (!process.env.MONGODB_URI) {
-      throw new Error('MONGODB_URI environment variable is not defined.');
-    }
-    await mongoose.connect(process.env.MONGODB_URI);
-    const restaurant = await Restaurant.findOneAndDelete({ _id: id, userId: req.user });
+    await connectToDatabase();
+
+    const restaurant = await Restaurant.findOneAndDelete({ _id: new mongoose.Types.ObjectId(id), userId: req.user });
 
     if (!restaurant) {
       return res.status(404).json({ message: 'Restaurant not found' });

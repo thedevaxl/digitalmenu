@@ -1,11 +1,10 @@
-import { NextApiRequest, NextApiResponse, NextApiHandler } from 'next';
+import { NextApiRequest, NextApiResponse } from 'next';
 import { verifyToken } from './jwt';
 
 const tokenBlacklist = new Set<string>();
 
-const jwtMiddleware: NextApiHandler = (req: NextApiRequest, res: NextApiResponse, next) => {
+const jwtMiddleware = (req: NextApiRequest, res: NextApiResponse, next: () => void) => {
   const authHeader = req.headers.authorization;
-
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ message: 'Unauthorized: No token provided' });
   }
@@ -21,7 +20,6 @@ const jwtMiddleware: NextApiHandler = (req: NextApiRequest, res: NextApiResponse
       return res.status(401).json({ message: 'Unauthorized: Invalid token' });
     }
 
-    // Attach user information to the request object
     (req as any).user = decoded.userId;
     next();
   } catch (error) {
