@@ -2,6 +2,8 @@ import { useState, useEffect, Key } from "react";
 import { useRouter } from "next/router";
 import { slugify } from "../utils/slugify";
 import Modal from "../components/Modal";
+import QRCode from "qrcode.react";
+
 import {
   IRestaurant,
   IWorkingHour,
@@ -102,6 +104,8 @@ const Admin = () => {
   const [error, setError] = useState<string | null>(null);
   const [userVerified, setUserVerified] = useState<boolean>(true);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+
   const [selectedPalette, setSelectedPalette] =
     useState<string>("Pizza Restaurant");
   const router = useRouter();
@@ -215,7 +219,6 @@ const Admin = () => {
       ? `/api/restaurant?id=${form.id}`
       : "/api/restaurant";
 
-      console.log(JSON.stringify(form))
     try {
       const res = await fetch(endpoint, {
         method,
@@ -785,7 +788,10 @@ const Admin = () => {
                 key={restaurant._id.toString()}
                 className="border p-4 rounded"
               >
-                <h3 className="text-lg font-bold">{restaurant.name}</h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-bold">{restaurant.name}</h3>
+                  <QRCode value={`${baseUrl}/restaurant/${slugify(restaurant.name)}`} size={128} />
+                  </div>
                 <p>colorPalette: {restaurant.colorPalette}</p>
                 <p>Slug: {restaurant.slug}</p>
                 <p>Owner: {restaurant.owner}</p>
