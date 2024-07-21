@@ -39,8 +39,8 @@ const handleRegister = async (req: NextApiRequest, res: NextApiResponse) => {
     await newUser.save();
 
     const token = generateToken({ userId: newUser._id });
-
-    const verificationLink = `http://localhost:3000/admin?verify=true&token=${token}`;
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const verificationLink = `${baseUrl}/admin?verify=true&token=${token}`;
     await sendEmail({
       to: newUser.email,
       subject: 'Verify your email address',
@@ -158,8 +158,8 @@ const handleResendVerification = async (req: NextApiRequest, res: NextApiRespons
     }
 
     const newToken = generateToken({ userId: currentUser._id });
-
-    const verificationLink = `http://localhost:3000/admin?verify=true&token=${newToken}`;
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const verificationLink = `${baseUrl}/admin?verify=true&token=${newToken}`;
     await sendEmail({
       to: currentUser.email,
       subject: "Verify your email address",

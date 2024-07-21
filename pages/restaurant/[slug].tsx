@@ -80,7 +80,8 @@ const RestaurantPage = ({ initialData }: RestaurantPageProps) => {
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const { slug } = context.params!;
 
-  const res = await fetch(`http://localhost:3000/api/restaurant/${slug}`);
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const res = await fetch(`${baseUrl}/api/restaurant/${slug}`);
   const data = await res.json();
 
   if (!data) {
