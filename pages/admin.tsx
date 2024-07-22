@@ -367,7 +367,10 @@ const Admin = () => {
   };
 
   const handleAddressChange = (address: string) => {
-    setForm({ ...form, address });
+    setForm((prevForm) => ({
+      ...prevForm,
+      address,
+    }));
   };
 
   const handleAddDish = (menuIndex: number) => {
@@ -596,6 +599,10 @@ const Admin = () => {
           Add New Restaurant
         </button>
       )}
+
+      <button onClick={handleLogout} className="btn btn-secondary mb-4">
+        Logout
+      </button>
 
       <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
 

@@ -7,7 +7,6 @@ interface AddressInputProps {
 
 const AddressInput: React.FC<AddressInputProps> = ({ value, onChange }) => {
   const [suggestions, setSuggestions] = useState<any[]>([]);
-  const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchSuggestions = async (inputValue: string) => {
@@ -45,37 +44,26 @@ const AddressInput: React.FC<AddressInputProps> = ({ value, onChange }) => {
     }
   };
 
-  
-
-  useEffect(() => {
-    const input = inputRef.current;
-    if (input) {
-      input.addEventListener('input', handleInput as any);
-    }
-
-    return () => {
-      if (input) {
-        input.removeEventListener('input', handleInput as any);
-      }
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
-    };
-  }, [handleInput]);
-
   const handleSelectSuggestion = (suggestion: any) => {
     onChange(suggestion.display_name);
     setSuggestions([]);
   };
 
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
+
   return (
     <div>
       <input
-        ref={inputRef}
         type="text"
         className="input input-bordered"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={handleInput}
       />
       {suggestions.length > 0 && (
         <ul className="suggestions">
@@ -83,6 +71,7 @@ const AddressInput: React.FC<AddressInputProps> = ({ value, onChange }) => {
             <li
               key={suggestion.place_id}
               onClick={() => handleSelectSuggestion(suggestion)}
+              className="cursor-pointer"
             >
               {suggestion.display_name}
             </li>

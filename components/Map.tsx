@@ -18,7 +18,6 @@ const Map: React.FC<MapProps> = ({ address }) => {
             `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&addressdetails=1`
           );
           const data = await response.json();
-          console.log('Geocoding response:', data); // Debug log
           if (data && data.length > 0) {
             setLocation([parseFloat(data[0].lat), parseFloat(data[0].lon)]);
           } else {
