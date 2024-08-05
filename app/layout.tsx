@@ -7,8 +7,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Create Your Digital Menu Effortlessly",
-  description:
-    "Join our platform and start offering a seamless ordering experience to your customers.",
+  description: "Join our platform and start offering a seamless ordering experience to your customers.",
 };
 const plausibleDomain = "allrestaurants.menu";
 
@@ -19,11 +18,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <PlausibleProvider domain={plausibleDomain}>
-          {children}
-        </PlausibleProvider>
-      </body>
+      <head>
+        <PlausibleProvider domain={plausibleDomain}/>
+      </head>
+      <body className={inter.className}>{children}</body>
     </html>
   );
 }
