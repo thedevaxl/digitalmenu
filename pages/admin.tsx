@@ -106,6 +106,8 @@ const Admin = () => {
   const [error, setError] = useState<string | null>(null);
   const [userVerified, setUserVerified] = useState<boolean>(true);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isAIModalOpen, setIsAIModalOpen] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
   const [selectedSuggestion, setSelectedSuggestion] = useState<string>("Empty");
   const [selectedPalette, setSelectedPalette] =
@@ -113,6 +115,9 @@ const Admin = () => {
   const [isFormVisible, setIsFormVisible] = useState<boolean>(false);
   const [currentRestaurant, setCurrentRestaurant] =
     useState<IRestaurant | null>(null);
+  const [menuVisibility, setMenuVisibility] = useState<Record<string, boolean>>(
+    {}
+  );
 
   const router = useRouter();
 
@@ -148,6 +153,7 @@ const Admin = () => {
       }
     } catch (err) {
       setError((err as Error).message);
+      router.push("/login");
     }
   };
 
@@ -230,6 +236,37 @@ const Admin = () => {
 
     setSelectedSuggestion(selectedType);
   };
+
+  // const handleGenerateAI = async (description: string) => {
+  //   setIsLoading(true);
+  //   try {
+  //     const res = await fetch("/api/generateMenu", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({ description }),
+  //     });
+
+  //     if (!res.ok) {
+  //       throw new Error("Failed to generate menu");
+  //     }
+
+  //     const data = await res.json();
+
+  //     setForm((prevForm) => ({
+  //       ...prevForm,
+  //       menu: data.menu,
+  //     }));
+  //     setIsModalOpen(false);
+  //     setIsFormVisible(true);
+  //   } catch (err) {
+  //     console.error(err);
+  //     setError(err.message);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   const handlePaletteChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedType = e.target.value;
@@ -518,6 +555,13 @@ const Admin = () => {
     }
   };
 
+  const toggleMenuVisibility = (restaurantId: string) => {
+    setMenuVisibility((prevState) => ({
+      ...prevState,
+      [restaurantId]: !prevState[restaurantId],
+    }));
+  };
+
   const setDefaultFormValues = () => {
     setForm({
       id: "",
@@ -538,7 +582,7 @@ const Admin = () => {
       </p>
       <label className="label">Suggestion Menu</label>
       <select
-        className="select select-bordered w-full mb-4"
+        className="select select-bordered w-full mb-4 bg-gray-200"
         value={selectedSuggestion}
         onChange={handleSuggestionChange}
       >
@@ -552,7 +596,7 @@ const Admin = () => {
 
       <label className="label">Color Palette</label>
       <select
-        className="select select-bordered w-full mb-4"
+        className="select select-bordered w-full mb-4 bg-gray-200"
         value={selectedPalette}
         onChange={handlePaletteChange}
       >
@@ -572,6 +616,15 @@ const Admin = () => {
       >
         Accept
       </button>
+      {/* <button
+        className="btn btn-secondary w-full mt-4"
+        onClick={() => {
+          setIsModalOpen(false);
+          setIsAIModalOpen(true);
+        }}
+      >
+        Use AI to Generate Menu
+      </button> */}
     </div>
   );
 
@@ -922,10 +975,7 @@ const Admin = () => {
           <ul className="space-y-2">
             {Array.isArray(restaurants) && restaurants.length > 0 ? (
               restaurants.map((restaurant) => (
-                <li
-                  key={restaurant._id.toString()}
-                  className="border p-4 rounded"
-                >
+                <li key={restaurant._id.toString()} className="border p-4 rounded">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-bold">{restaurant.name}</h3>
                     <QRCode
@@ -964,29 +1014,42 @@ const Admin = () => {
                     ))}
                   </div>
                   <div>
-                    <h4 className="font-bold">Menu</h4>
-                    {restaurant.menu.map((category, index) => (
-                      <div key={index}>
-                        <h5 className="font-bold">{category.category}</h5>
-                        {category.dishes.map((dish, dishIndex) => (
-                          <div key={dishIndex} className="border p-2 mb-2">
-                            <strong>{dish.name}</strong> - ${dish.price}
-                            <ul>
-                              {dish.ingredients.map((ingredient, ingIndex) => (
-                                <li key={ingIndex}>{ingredient}</li>
-                              ))}
-                            </ul>
-                            <ul>
-                              {dish.allergens.map((allergen, allergenIndex) => (
-                                <li key={allergenIndex}>
-                                  Allergen: {allergen}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        ))}
-                      </div>
-                    ))}
+                    <h4 className="font-bold">
+                      Menu
+                      <button
+                        onClick={() => toggleMenuVisibility(restaurant._id.toString())}
+                        className="ml-2 text-blue-500 underline"
+                      >
+                        {menuVisibility[restaurant._id.toString()] ? "Hide" : "Show"}
+                      </button>
+                    </h4>
+                    {menuVisibility[restaurant._id.toString()] &&
+                      restaurant.menu.map((category, index) => (
+                        <div key={index}>
+                          <h5 className="font-bold">{category.category}</h5>
+                          {category.dishes.map((dish, dishIndex) => (
+                            <div key={dishIndex} className="border p-2 mb-2">
+                              <strong>{dish.name}</strong> - ${dish.price}
+                              <ul>
+                                {dish.ingredients.map(
+                                  (ingredient, ingIndex) => (
+                                    <li key={ingIndex}>{ingredient}</li>
+                                  )
+                                )}
+                              </ul>
+                              <ul>
+                                {dish.allergens.map(
+                                  (allergen, allergenIndex) => (
+                                    <li key={allergenIndex}>
+                                      Allergen: {allergen}
+                                    </li>
+                                  )
+                                )}
+                              </ul>
+                            </div>
+                          ))}
+                        </div>
+                      ))}
                   </div>
                   <button
                     onClick={() => handleEdit(restaurant)}
@@ -1016,13 +1079,25 @@ const Admin = () => {
       )}
 
       {userVerified && (
-        <Modal
-          title="Create Your Restaurant"
-          content={modalContent}
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          type="default"
-        />
+        <>
+          <Modal
+            title="Create Your Restaurant"
+            content={modalContent}
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            type="default"
+          />
+
+          {/* <Modal
+            title="Describe Your Restaurant"
+            content={<p>Please describe your restaurant to generate a menu.</p>}
+            isOpen={isAIModalOpen}
+            onClose={() => setIsAIModalOpen(false)}
+            type="default"
+            showAIInput={true}
+            onGenerateAI={handleGenerateAI}
+          /> */}
+        </>
       )}
     </div>
   );

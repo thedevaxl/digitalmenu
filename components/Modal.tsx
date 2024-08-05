@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface ModalProps {
   title: string;
@@ -6,6 +6,8 @@ interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   type?: 'default' | 'warning' | 'success' | 'error';
+  showAIInput?: boolean;
+  onGenerateAI?: (description: string) => void;
 }
 
 const modalTypeClasses = {
@@ -15,7 +17,18 @@ const modalTypeClasses = {
   error: 'bg-red-100 text-red-800',
 };
 
-const Modal: React.FC<ModalProps> = ({ title, content, isOpen, onClose, type = 'default' }) => {
+const Modal: React.FC<ModalProps> = ({ title, content, isOpen, onClose, type = 'default', showAIInput = false, onGenerateAI }) => {
+  const [description, setDescription] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleGenerate = async () => {
+    if (onGenerateAI) {
+      setIsLoading(true);
+      await onGenerateAI(description);
+      setIsLoading(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -28,6 +41,23 @@ const Modal: React.FC<ModalProps> = ({ title, content, isOpen, onClose, type = '
           </button>
         </div>
         <div>{content}</div>
+        {showAIInput && (
+          <div className="mt-4">
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Describe your restaurant..."
+              className="textarea textarea-bordered w-full mb-4"
+            ></textarea>
+            <button
+              className="btn btn-primary w-full"
+              onClick={handleGenerate}
+              disabled={isLoading}
+            >
+              {isLoading ? 'Generating...' : 'Generate Suggestion'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
