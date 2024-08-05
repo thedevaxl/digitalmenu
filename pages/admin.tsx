@@ -972,7 +972,7 @@ const Admin = () => {
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-bold">{restaurant.name}</h3>
                     <QRCode
-                      value={`${baseUrl}/restaurant/${slugify(
+                      value={`${baseUrl}/${slugify(
                         restaurant.name
                       )}`}
                       size={128}
