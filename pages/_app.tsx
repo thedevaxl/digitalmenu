@@ -1,15 +1,8 @@
-import "../app/globals.css";
-import type { AppProps } from "next/app";
-import PlausibleProvider from "next-plausible";
+import '../app/globals.css'
+import type { AppProps } from 'next/app'
 
 function MyApp({ Component, pageProps }: AppProps) {
-  const plausibleDomain = "allrestaurants.menu";
-
-  return (
-    <PlausibleProvider domain={plausibleDomain}>
-      <Component {...pageProps} />
-    </PlausibleProvider>
-  );
+  return <Component {...pageProps} />
 }
 
-export default MyApp;
+export default MyApp
