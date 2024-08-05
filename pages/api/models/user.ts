@@ -6,14 +6,23 @@ interface IUser extends Document {
   password: string;
   isVerified: boolean;
   createdAt: Date;
+  verificationExpires: Date | null;
 }
 
-const userSchema: Schema = new Schema<IUser>({
+const userSchema: Schema<IUser> = new Schema<IUser>({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   isVerified: { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now, expires: '1d' }, // TTL index set to 1 minute for testing
+  createdAt: { type: Date, default: Date.now },
+  verificationExpires: { type: Date, default: () => Date.now() + 24 * 60 * 60 * 1000, expires: 0 }, // TTL index for 1 day
+});
+
+userSchema.pre('save', function (next) {
+  if (this.isVerified) {
+    this.verificationExpires = null; // Remove expiration if user is verified
+  }
+  next();
 });
 
 const User = mongoose.models.User || mongoose.model<IUser>('User', userSchema);

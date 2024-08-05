@@ -34,6 +34,7 @@ const handleRegister = async (req: NextApiRequest, res: NextApiResponse) => {
       password: hashedPassword,
       isVerified: false,
       createdAt: new Date(),
+      verificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000) // Set expiration for 24 hours
     });
 
     await newUser.save();
@@ -53,6 +54,7 @@ const handleRegister = async (req: NextApiRequest, res: NextApiResponse) => {
     return res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 };
+
 
 const handleLogin = async (req: NextApiRequest, res: NextApiResponse) => {
   const { email, password } = req.body;
@@ -125,10 +127,11 @@ const handleVerify = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     if (user.isVerified) {
-      return res.redirect('/admin');
+      return res.status(400).json({ message: 'User is already verified' });
     }
 
     user.isVerified = true;
+    user.verificationExpires = null; // Remove expiration
     await user.save();
 
     return res.status(200).json({ message: 'Email verified successfully' });
@@ -137,6 +140,7 @@ const handleVerify = async (req: NextApiRequest, res: NextApiResponse) => {
     return res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 };
+
 
 const handleResendVerification = async (req: NextApiRequest, res: NextApiResponse) => {
   const authHeader = req.headers.authorization;

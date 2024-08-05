@@ -1,10 +1,10 @@
 import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
-import { IRestaurant } from '../api/models/restaurant';
+import { IRestaurant } from './api/models/restaurant';
 import dynamic from 'next/dynamic';
 
-const Map = dynamic(() => import('../../components/Map'), { ssr: false });
+const Map = dynamic(() => import('../components/Map'), { ssr: false });
 
 interface RestaurantPageProps {
   initialData: IRestaurant | null;

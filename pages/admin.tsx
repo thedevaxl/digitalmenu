@@ -499,7 +499,7 @@ const Admin = () => {
 
   const handleView = (restaurant: IRestaurant) => {
     const slug = slugify(restaurant.name);
-    const url = `/restaurant/${slug}`;
+    const url = `/${slug}`;
     window.location.href = url;
   };
 
