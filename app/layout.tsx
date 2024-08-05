@@ -19,9 +19,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <Head>
-        <PlausibleProvider domain={plausibleDomain} />
-      </Head>
+    <Head>
+      <script
+        defer
+        data-domain={plausibleDomain}
+        src="https://plausible.io/js/script.js"
+      ></script>
+    </Head>
       <body className={inter.className}>{children}</body>
     </html>
   );
